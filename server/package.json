@@ -1,19 +1,33 @@
 {
   "name": "interactive-learning-hub-server",
   "version": "1.0.0",
-  "description": "Backend server for the Interactive Learning Hub",
+  "description": "Gamified Educational Platform Backend Server API Engine",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "nodemon server.js",
+    "seed": "node utils/seed.js"
   },
+  "keywords": [
+    "express",
+    "mongodb",
+    "mongoose",
+    "jwt",
+    "gamification",
+    "learning-hub"
+  ],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.3.1"
+    "mongoose": "^8.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }

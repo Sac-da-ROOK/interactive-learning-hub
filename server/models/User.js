@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -7,7 +6,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Username is required'],
     unique: true,
     trim: true,
-    minlength: [3, 'Username must be at least 3 characters long']
+    minlength: [3, 'Username must be at least 3 characters']
   },
   email: {
     type: String,
@@ -15,52 +14,40 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please use a valid email address']
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
   },
   password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters long']
+    minlength: [6, 'Password must be at least 6 characters']
   },
-  role: {
-    type: String,
-    enum: ['student', 'admin'],
-    default: 'student'
-  },
-  // Gamification properties
   xp: {
     type: Number,
     default: 0
   },
-  streak: {
+  level: {
     type: Number,
-    default: 0
+    default: 1
   },
-  lastActive: {
-    type: Date,
-    default: Date.now
-  }
+  completedLessons: [{
+    type: String // Stores lesson IDs (e.g., 'lesson-1')
+  }],
+  quizAttempts: [{
+    quizId: { type: String, required: true },
+    score: { type: Number, required: true },
+    totalQuestions: { type: Number, required: true },
+    completedAt: { type: Date, default: Date.now }
+  }]
 }, {
-  timestamps: true // Automatically adds createdAt and updatedAt fields
+  timestamps: true
 });
 
-// Middleware: Hash the password automatically before saving a user to the database
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+// Calculate user level dynamically based on XP milestones before saving
+userSchema.pre('save', function(next) {
+  // Simple algorithm: Every 100 XP grants a level upgrade
+  this.level = Math.floor(this.xp / 100) + 1;
+  next();
 });
-
-// Helper Method: Compare an entered password with the hashed password in the database
-userSchema.methods.comparePassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
 
 const User = mongoose.model('User', userSchema);
 export default User;

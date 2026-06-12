@@ -1,38 +1,31 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-// Protect routes - verify if the user is logged in
 export const protect = async (req, res, next) => {
   let token;
 
-  // Check for token in Authorization header (Format: Bearer <token>)
+  // 1. Check if the Authorization header exists and starts with "Bearer"
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
-      // Extract token
+      // Extract token from the header: "Bearer <token_string>"
       token = req.headers.authorization.split(' ')[1];
 
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // 2. Decode and verify the token using your JWT secret
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_key_change_me');
 
-      // Fetch user from database and attach to request object (excluding password)
+      // 3. Find the user in the database by ID and attach them to the request object (excluding the password)
       req.user = await User.findById(decoded.id).select('-password');
-      
+
+      // Move on to the next middleware or controller function
       next();
     } catch (error) {
-      return res.status(401).json({ message: 'Not authorized, token failed' });
+      console.error('JWT Verification Error:', error.message);
+      res.status(401).json({ message: 'Not authorized, token validation failed' });
     }
   }
 
+  // If no token was found in the headers at all
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token provided' });
-  }
-};
-
-// Admin only middleware access restriction
-export const adminOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Access denied. Admin authorization required.' });
+    res.status(401).json({ message: 'Not authorized, no token provided' });
   }
 };

@@ -3,7 +3,7 @@ import { registerUser, loginUser } from '../controllers/authController.js';
 
 const router = express.Router();
 
-// Route mappings
+// Map endpoints to controller methods
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 

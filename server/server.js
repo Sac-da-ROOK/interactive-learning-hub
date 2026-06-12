@@ -1,47 +1,43 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-
-// 1. IMPORT YOUR ROUTES AT THE TOP
+import path from 'path';
+import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js'; // <-- Import the new user progress routes
 
-// Load environment variables from the .env file
+// Load environmental variables
 dotenv.config();
 
-// Initialize the Express application
-const app = express();
-
-// Set up Middleware
-app.use(cors()); // Allows your React frontend to communicate with this backend
-app.use(express.json()); // Allows the server to accept and parse JSON data in request bodies
-
-// Define the Port and Database URI
-const PORT = process.env.PORT || 5000;
-// We use a fallback URI for local development if the .env file isn't set up yet
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/learning_hub';
-
 // Connect to MongoDB
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('✅ Successfully connected to MongoDB');
-  })
-  .catch((error) => {
-    console.error('❌ MongoDB connection error:', error.message);
-  });
+connectDB();
 
-// 2. MOUNT YOUR ROUTES HERE
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Setup Global Middlewares
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// --- API Route Declarations ---
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes); // <-- Mount user progress routes here
 
-// A simple health-check route to test if the server is running
-app.get('/api/status', (req, res) => {
-  res.json({ 
-    status: 'success', 
-    message: 'Welcome to the Interactive Learning Hub API! Server is up and running.' 
+// Server API Base Health-Check Route
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    message: 'Backend server is running successfully!',
+    timestamp: new Date()
   });
 });
 
-// Start the server and listen for requests
+// Start listening for client network requests
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 Server successfully spinning up in ${process.env.NODE_ENV || 'development'} mode`);
+  console.log(`Listening on network port: http://localhost:${PORT}`);
 });
